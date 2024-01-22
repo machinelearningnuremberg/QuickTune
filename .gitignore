@@ -3,5 +3,5 @@ output/
 previous/
 data/
 aft_data/
-experiments/
+experiments*
 *__pycache__*
