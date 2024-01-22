@@ -1,0 +1,145 @@
+pct_to_freeze:
+    type: "float"
+    range: [0., 1.]
+    log: True
+batch_size:
+    type: "int"
+    range: [2, 512]
+    log: True
+amp: [False]
+model:
+    type: "categorical"
+    options: ['beit_large_patch16_512',
+            'volo_d5_512',
+            'volo_d5_448',
+            'volo_d4_448',
+            'swinv2_base_window12to24_192to384_22kft1k',
+            'beit_base_patch16_384',
+            'volo_d3_448',
+            'tf_efficientnet_b7_ns',
+            'convnext_small_384_in22ft1k',
+            'tf_efficientnet_b6_ns',
+            'volo_d1_384',
+            'xcit_small_12_p8_384_dist',
+            'deit3_small_patch16_384_in21ft1k',
+            'tf_efficientnet_b4_ns',
+            'xcit_tiny_24_p8_384_dist',
+            'xcit_tiny_12_p8_384_dist',
+            'edgenext_small',
+            'xcit_nano_12_p8_384_dist',
+            'mobilevitv2_075',
+            'edgenext_x_small',
+            'mobilevit_xs',
+            'edgenext_xx_small',
+            'mobilevit_xxs',
+            'dla46x_c']
+opt:
+    type: "categorical"
+    options: ["sgd", "momentum", "adam", "adamw", "adamp"]
+opt_betas:
+    type: "categorical"
+    options: ["0.9 0.999", "0 0.99", "0.9 0.99", "0 0.999"]
+    only_active_with: {"opt": ["adam", "adamw", "adamp"]}
+momentum:
+    type: "categorical"
+    options: [0, 0.8, 0.9, 0.95, 0.99]
+    only_active_with: {"opt": ["momentum"]}
+weight_decay:
+    type: "float"
+    range: [0, 0.1]
+    log: True
+clip_grad:
+    type: "categorical"
+    options: [None, 1, 10]
+layer_decay:
+    type: "categorical"
+    options: [None, 0.65, 0.75]
+sched:
+    type: "categorical"
+    options: [None, "cosine", "step", "multistep", "plateau"]
+lr:
+    type: "float"
+    range: [0.00001, 0.01]
+    log: True
+warmup_lr:
+    type: "float"
+    range: [0, 0.000001]
+    log: True
+epochs:
+    type: "categorical"
+    options: [50]
+warmup_epochs:
+    type: "int"
+    range: [0, 10]
+    log: False
+decay_rate:
+    type: "float"
+    range: [0.1, 0.5]
+    log: False
+    only_active_with: {"sched": ["step", "multistep"]}
+decay_epochs:
+    type: "int"
+    range: [1, 20]
+    only_active_with: {"sched": ["step", "multistep"]}
+patience_epochs: 
+    type: "int"
+    range: [2,5]
+    log: False
+    only_active_with: {"sched": ["plateau"]}
+linear_probing:
+    type: "categorical"
+    options: [False, True]
+stoch_norm:
+    type: "categorical"
+    options: [False, True]
+bss_reg:
+    type: "float"
+    range: [ 0, 0.1]
+    log: True
+sp_reg:
+    type: "float"
+    range: [0, 0.1]
+    log: True
+delta_reg:
+    type: "float"
+    range: [0, 0.1]
+    log: True
+cotuning_reg:
+    type: "float"
+    range: [0, 4]
+    log: True
+cutmix:
+    type: "float"
+    range: [0.  4.]
+    log: True
+mixup:
+    type: "float"
+    range: [0, 8]
+    log: True
+mixup_prob:
+    type: "float"
+    range: [0, 1]
+    log: False
+smoothing:
+    type: "float"
+    range: [0, 0.1]
+    log: False
+drop:
+    type: "float"
+    range: [0, 0.4]
+    log: False
+data_augmentation:
+    type: "categorical"
+    options: [None, "trivial_augment", "random_augment", "auto_augment"]
+auto_augment:
+    type: "categorical"
+    options: [None, "v0", "original"]
+    only_active_with: {"data_augmentation": ["auto_augment"]}
+ra_num_ops:
+    type: "int"
+    range: [2, 3]
+    only_active_with: {"data_augmentation": ["random_augment"]}
+ra_magnitude:
+    type: "int"
+    range: [9, 17]
+    only_active_with: {"data_augmentation": ["random_augment"]}

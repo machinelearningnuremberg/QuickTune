@@ -1,0 +1,71 @@
+pct_to_freeze: [0., 0.2, 0.4, 0.6, 0.8, 1.]
+batch_size: [2, 4, 8, 16, 32, 64, 128, 512]
+model:  ['beit_large_patch16_512',
+            'volo_d5_512',
+            'volo_d5_448',
+            'volo_d4_448',
+            'swinv2_base_window12to24_192to384_22kft1k',
+            'beit_base_patch16_384',
+            'volo_d3_448',
+            'tf_efficientnet_b7_ns',
+            'convnext_small_384_in22ft1k',
+            'tf_efficientnet_b6_ns',
+            'volo_d1_384',
+            'xcit_small_12_p8_384_dist',
+            'deit3_small_patch16_384_in21ft1k',
+            'tf_efficientnet_b4_ns',
+            'xcit_tiny_24_p8_384_dist',
+            'xcit_tiny_12_p8_384_dist',
+            'edgenext_small',
+            'xcit_nano_12_p8_384_dist',
+            'mobilevitv2_075',
+            'edgenext_x_small',
+            'mobilevit_xs',
+            'edgenext_xx_small',
+            'mobilevit_xxs',
+            'dla46x_c']
+opt: ["sgd", "momentum", "adam", "adamw", "adamp"]
+opt_betas: 
+    options: ["0.9 0.999", "0 0.99", "0.9 0.99", "0 0.999"]
+    only_active_with: {"opt": ["adam", "adamw", "adamp"]}
+momentum: 
+    options: [0, 0.8, 0.9, 0.95, 0.99]
+    only_active_with: {"opt": ["momentum"]}
+weight_decay: [0.1, 0.01, 0.001, 0.0001, 0.00001, 0]
+clip_grad: [None, 1, 10]
+layer_decay: [None, 0.65, 0.75]
+sched: [None, "cosine", "step", "multistep", "plateau"]
+lr: [0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001]
+warmup_lr: [0, 0.000001, 0.00001]
+epochs: [50]
+warmup_epochs: [0, 5, 10]
+decay_rate:
+    options: [0.1, 0.5]
+    only_active_with: {"sched": ["step", "multistep"]}
+decay_epochs: 
+    options: [10, 20]
+    only_active_with: {"sched": ["step", "multistep"]}
+patience_epochs: 
+    options: [2,5]
+    only_active_with: {"sched": ["plateau"]}
+linear_probing: [False, True]
+stoch_norm: [False, True]
+bss_reg: [-3, -2, -1, 0, 0.0001, 0.001, 0.01, 0.1]
+sp_reg: [-3, -2, -1, 0, 0.0001, 0.001, 0.01, 0.1]
+delta_reg: [-3, -2, -1, 0, 0.0001, 0.001, 0.01, 0.1]
+cotuning_reg: [-3, -2, -1, 0, 0.5, 1, 2, 4]
+cutmix: [0. ,0.1, 0.25, 0.5, 1., 2., 4.] 
+mixup: [0., 0.2, 0.4, 1, 2, 4, 8] 
+mixup_prob: [0, 0.25, 0.5, 0.75, 1]
+smoothing: [0, 0.05, 0.1]
+drop: [0, 0.1, 0.2, 0.3, 0.4]
+data_augmentation: [None, "trivial_augment", "random_augment", "auto_augment"]
+auto_augment: 
+    options: [None, "v0", "original"]
+    only_active_with: {"data_augmentation": ["auto_augment"]}
+ra_num_ops: 
+    options: [2, 3]
+    only_active_with: {"data_augmentation": ["random_augment"]}
+ra_magnitude:
+    options: [9, 17]
+    only_active_with: {"data_augmentation": ["random_augment"]}
