@@ -27,7 +27,7 @@ unzip QT_metadataset.zip
 
 ## Fine-tune Network
 
-# Download Dataset (e.g. a Meta-Album dataset)
+### Download Dataset (e.g. a Meta-Album dataset)
 
 Download a dataset. In this example, we will use dataset from meta-album.
 
