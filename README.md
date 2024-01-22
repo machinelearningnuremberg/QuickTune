@@ -16,20 +16,12 @@ conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit
 conda install gpytorch -c gpytorch
 ```
 
-## Download metadata
-Download QuickTune meta-dataset
 
-```bash
-mkdir data && cd data
-wget https://rewind.tf.uni-freiburg.de/index.php/s/oMxC5sfrkA53ESo/download/qt_metadataset.zip
-unzip QT_metadataset.zip
-```
 
-## Fine-tune Network
+## Fine-tune Network (without HPO)
 
-### Download Dataset (e.g. a Meta-Album dataset)
 
-Download a dataset. In this example, we will use dataset from meta-album.
+Download a dataset. In this example, we will use a dataset from meta-album.
 
 ```bash
 mkdir data && cd data
@@ -58,7 +50,15 @@ python finetune.py data \
 
 ## Run Quick-Tune on Meta-dataset
 
+Download QuickTune meta-dataset:
 
+```bash
+mkdir data && cd data
+wget https://rewind.tf.uni-freiburg.de/index.php/s/oMxC5sfrkA53ESo/download/qt_metadataset.zip
+unzip QT_metadataset.zip
+```
+
+Run example:
 ```
 mkdir output
 python bash_scripts/run_example.sh
