@@ -4,5 +4,5 @@ previous/
 data/
 aft_data*
 experiments*
-*/*/__pycache__*
+**/__pycache__/
 .vscode/*
