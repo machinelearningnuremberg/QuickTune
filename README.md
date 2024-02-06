@@ -18,10 +18,10 @@ conda install gpytorch -c gpytorch
 
 
 
-## Fine-tune Network (without HPO)
+## Fine-tune Network (Directly)
 
 
-Download a dataset. In this example, we will use a dataset from meta-album.
+Download a dataset. In this example, we will use a dataset from meta-album. The metadataset curves were generated in this way.
 
 ```bash
 mkdir data && cd data
@@ -69,7 +69,7 @@ python bash_scripts/run_extended.sh
 ```
 
 
-## Run on a new dataset
+## Run on a New Dataset
 
 For finetuning a new dataset, you can use the following examples as reference. Make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution. 
 
