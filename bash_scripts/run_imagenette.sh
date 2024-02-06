@@ -1,0 +1,1 @@
+python user_interface.py --data_path data/imagenette2-320 --experiment_id qt_metalearned_mini_imagenette --budget_limit 14400 --dataset_name imagenette2-320 --num_classes 10 --num_channels 3 --image_size 128 --verbose --dataset_size 3200 --optimizer_name qt_metalearned_mini

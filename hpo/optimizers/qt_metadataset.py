@@ -16,9 +16,9 @@ NON_CAT_COLS = ['amp', 'batch_size', 'bss_reg', 'cotuning_reg', 'cutmix', 'decay
                 'trivial_augment', 'warmup_epochs', 'warmup_lr', 'weight_decay', 'max_eval_top1', 'max_eval_top5',
                 'curve_length', 'final_batch_size', 'invalid_loss_value', 'max_memory_allocated', 'clip_grad', 'layer_decay']
 
-class QTMetaDataset:
+class QuickTuneMetaDataset:
 
-    def __init__(self, set="micro",
+    def __init__(self, version="micro",
                         path=None,
                         curves_to_load=None,
                         preprocess_args=True,
@@ -38,7 +38,7 @@ class QTMetaDataset:
         self.impute_numerical_args = impute_numerical_args
         self.encode_categorical_args = encode_categorical_args
         self.standardize_numerical_args = standardize_numerical_args
-        self.set = set
+        self.version = version
         self.dataset_name = None
         self.preset_metafeatures = None
         self.verbose = verbose
@@ -67,7 +67,7 @@ class QTMetaDataset:
         self.load_args(preprocess_args)
         self.load_metafeatures()
 
-        if self.set == "zap":
+        if self.version == "zap":
             self.obtain_augmentation_id()
 
     def obtain_augmentation_id(self):
@@ -77,7 +77,7 @@ class QTMetaDataset:
 
 
     def aggregate_curves(self):
-        files = os.listdir(f"{self.path}/curves/{self.set}")
+        files = os.listdir(f"{self.path}/curves/{self.version}")
         aggregated_curves = {}
         aggregated_args = {}
 
@@ -87,9 +87,9 @@ class QTMetaDataset:
         for file in files:
             try:
                 run = file[:-4]
-                with open(f"{self.path}/args/{self.set}/{run}.yaml", 'r') as stream:
+                with open(f"{self.path}/args/{self.version}/{run}.yaml", 'r') as stream:
                     args = yaml.safe_load(stream)
-                curves_data = pd.read_csv(f"{self.path}/curves/{self.set}/{file}", nrows=52, index_col=0)
+                curves_data = pd.read_csv(f"{self.path}/curves/{self.version}/{file}", nrows=52, index_col=0)
 
                 if curves_data.shape[0] < 2:
                     if (curves_data["eval_top1"][0] == 0.0) or (np.isnan(curves_data["eval_top1"][0])):
@@ -121,23 +121,23 @@ class QTMetaDataset:
                 print(e)
 
         for name in self.curves_names:
-            with open(f"{self.path}/qt_metadataset/{self.set}/{name}.json", 'w') as outfile:
+            with open(f"{self.path}/qt_metadataset/{self.version}/{name}.json", 'w') as outfile:
                 json.dump(aggregated_curves[name], outfile)
 
-        with open(f"{self.path}/qt_metadataset/{self.set}/args.json", 'w') as outfile:
+        with open(f"{self.path}/qt_metadataset/{self.version}/args.json", 'w') as outfile:
                 json.dump(aggregated_args, outfile)
 
     def load_curves(self, curve_names):
         self.curves = {}
         for name in curve_names:
-            with open(f"{self.path}/qt_metadataset/{self.set}/{name}.json", 'r') as stream:
+            with open(f"{self.path}/qt_metadataset/{self.version}/{name}.json", 'r') as stream:
                 self.curves[name] = json.load(stream)
 
     def get_superset(self):
-        if self.set in ["micro", "mini", "extended"]:
+        if self.version in ["micro", "mini", "extended"]:
             return "meta-album"
         else:
-            return self.set
+            return self.version
 
     def load_metafeatures(self):
         superset = self.get_superset()
@@ -160,8 +160,8 @@ class QTMetaDataset:
     def load_args(self, preprocess=False, file_name="unnormalized_args_table"):
 
         #check if path exists
-        if not os.path.exists(f"{self.path}/qt_metadataset/{self.set}/{file_name}.csv"):
-            with open(f"{self.path}/qt_metadataset/{self.set}/args.json", 'r') as stream:
+        if not os.path.exists(f"{self.path}/qt_metadataset/{self.version}/{file_name}.csv"):
+            with open(f"{self.path}/qt_metadataset/{self.version}/args.json", 'r') as stream:
                 self.args = json.load(stream)
             self.args_df = pd.DataFrame(self.args).T
 
@@ -184,9 +184,9 @@ class QTMetaDataset:
 
             if preprocess:
                 self.args_df = self.preprocess_args(self.args_df)
-            self.args_df.to_csv(f"{self.path}/qt_metadataset/{self.set}/{file_name}.csv")
+            self.args_df.to_csv(f"{self.path}/qt_metadataset/{self.version}/{file_name}.csv")
         else:
-            self.args_df = pd.read_csv(f"{self.path}/qt_metadataset/{self.set}/{file_name}.csv", index_col=0)
+            self.args_df = pd.read_csv(f"{self.path}/qt_metadataset/{self.version}/{file_name}.csv", index_col=0)
 
         self.check_valid_args()
 

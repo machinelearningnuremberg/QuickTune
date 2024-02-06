@@ -6,3 +6,5 @@ aft_data*
 experiments*
 **/__pycache__/
 .vscode/*
+logs/
+**.pyc

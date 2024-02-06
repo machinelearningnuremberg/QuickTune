@@ -5,41 +5,30 @@ import math
 import os
 import time
 from typing import Dict, List, Optional, Tuple
-import argparse
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from scipy.stats import norm, t
 import torch
 
-from hpo.optimizers.dyhpo.dyhpo import DyHPO, FeatureExtractor
-from hpo.optimizers.quick_tune.cost_predictor import CostPredictorTrainer, CostPredictor
-from hpo.optimizers.qt_metadataset import QTMetaDataset
-from hpo.optimizers.quick_tune.meta_trainer import MetaTrainer
 
-SPLITS = {0: [(0,1,2), (3,),(4,)],
-          1: [(1,2,3), (4,),(0,)],
-          2: [(2,3,4), (0,),(1,)],
-          3: [(3,4,0), (1,),(2,)],
-          4: [(4,0,1), (2,),(3,)]}
-
-class QTOptimizer:
+class QuickTuneOptimizer:
 
     def __init__(
         self,
         hp_candidates: np.ndarray,
         log_indicator: List,
         hp_names: List = None,
-        model = None,
+        model=None,
         seed: int = 11,
         max_benchmark_epochs: int = 50,
         fantasize_step: int = 1,
         minimization: bool = True,
-        total_budget: int = 10000, #budget in epochs (not time)
+        total_budget: int = 10000,  # budget in epochs (not time)
         device: str = None,
-        dataset_name: str = 'unknown',
-        output_path: str = '.',
-        acqf_fc: str = 'ucb',
-        explore_factor = 1.0,
+        dataset_name: str = "unknown",
+        output_path: str = ".",
+        acqf_fc: str = "ucb",
+        explore_factor=1.0,
         learning_rate: float = 0.001,
         apply_preprocessing: bool = False,
         init_conf_indices: list = None,
@@ -82,8 +71,11 @@ class QTOptimizer:
         np.random.seed(seed)
 
         if device is None:
-            self.device = torch.device(
-                'cuda') if torch.cuda.is_available() else torch.device('cpu')
+            self.device = (
+                torch.device("cuda")
+                if torch.cuda.is_available()
+                else torch.device("cpu")
+            )
         else:
             self.device = torch.device(device)
 
@@ -109,8 +101,8 @@ class QTOptimizer:
         self.logger = logging.getLogger()
 
         logging.basicConfig(
-            format='%(levelname)s:%(asctime)s:%(message)s',
-            filename=f'{output_path}/dyhpo_surrogate_{dataset_name}_{seed}.log',
+            format="%(levelname)s:%(asctime)s:%(message)s",
+            filename=f"{output_path}/dyhpo_surrogate_{dataset_name}_{seed}.log",
             level=logging_level,
         )
 
@@ -134,7 +126,9 @@ class QTOptimizer:
         conf_individual_budget = 1
         if init_conf_indices is None:
             initial_configurations_nr = 1
-            self.init_conf_indices = self.rng.choice(self.hp_candidates.shape[0], initial_configurations_nr, replace=False)
+            self.init_conf_indices = self.rng.choice(
+                self.hp_candidates.shape[0], initial_configurations_nr, replace=False
+            )
         else:
             initial_configurations_nr = len(init_conf_indices)
             self.init_conf_indices = np.array(init_conf_indices)
@@ -165,14 +159,14 @@ class QTOptimizer:
         self.output_path = output_path
         self.dataset_name = dataset_name
 
-        self.no_improvement_threshold = int(self.max_benchmark_epochs + 0.2 * self.max_benchmark_epochs)
+        self.no_improvement_threshold = int(
+            self.max_benchmark_epochs + 0.2 * self.max_benchmark_epochs
+        )
         self.no_improvement_patience = 0
         self.converged_configs = []
         self.acq_fc = acqf_fc
         self.explore_factor = explore_factor
         self.cost_trainer = None
-
-
 
     def _prepare_dataset_and_budgets(self) -> Dict[str, torch.Tensor]:
         """
@@ -182,7 +176,9 @@ class QTOptimizer:
             the budgets, the curves and lastly the labels.
         """
 
-        train_examples, train_labels, train_budgets, train_curves = self.history_configurations()
+        train_examples, train_labels, train_budgets, train_curves = (
+            self.history_configurations()
+        )
 
         train_examples = np.array(train_examples, dtype=np.single)
         train_labels = np.array(train_labels, dtype=np.single)
@@ -204,10 +200,10 @@ class QTOptimizer:
         train_curves = train_curves.to(device=self.device)
 
         data = {
-            'X_train': train_examples,
-            'train_budgets': train_budgets,
-            'train_curves': train_curves,
-            'y_train': train_labels,
+            "X_train": train_examples,
+            "train_budgets": train_budgets,
+            "train_curves": train_curves,
+            "y_train": train_labels,
         }
 
         return data
@@ -217,7 +213,7 @@ class QTOptimizer:
         Train the surrogate model.
         """
         data = self._prepare_dataset_and_budgets()
-        self.logger.info(f'Started training the model')
+        self.logger.info(f"Started training the model")
 
         self.model.train_pipeline(
             data,
@@ -235,7 +231,9 @@ class QTOptimizer:
                 configurations with their associated indices, scaled and
                 non-scaled budgets.
         """
-        configurations, hp_indices, budgets, learning_curves = self.generate_candidate_configurations()
+        configurations, hp_indices, budgets, learning_curves = (
+            self.generate_candidate_configurations()
+        )
         budgets = np.array(budgets, dtype=np.single)
         non_scaled_budgets = copy.deepcopy(budgets)
         # scale budgets to [0, 1]
@@ -255,16 +253,20 @@ class QTOptimizer:
 
         train_data = self._prepare_dataset_and_budgets()
         test_data = {
-            'X_test': configurations,
-            'test_budgets': budgets,
-            'test_curves': learning_curves,
+            "X_test": configurations,
+            "test_budgets": budgets,
+            "test_curves": learning_curves,
         }
 
-        mean_predictions, std_predictions, costs = self.model.predict_pipeline(train_data, test_data)
+        mean_predictions, std_predictions, costs = self.model.predict_pipeline(
+            train_data, test_data
+        )
 
         return mean_predictions, std_predictions, costs, hp_indices, non_scaled_budgets
 
-    def set_hyperparameter_candidates(self, hyperparameter_candidates, init_conf_indices=None):
+    def set_hyperparameter_candidates(
+        self, hyperparameter_candidates, init_conf_indices=None
+    ):
         """
         Set the hyperparameter candidates that will be used to build the surrogate model.
         Args:
@@ -276,7 +278,9 @@ class QTOptimizer:
         conf_individual_budget = 1
         if init_conf_indices is None:
             initial_configurations_nr = 1
-            self.init_conf_indices = self.rng.choice(self.hp_candidates.shape[0], initial_configurations_nr, replace=False)
+            self.init_conf_indices = self.rng.choice(
+                self.hp_candidates.shape[0], initial_configurations_nr, replace=False
+            )
         else:
             initial_configurations_nr = len(init_conf_indices)
             self.init_conf_indices = np.array(init_conf_indices)
@@ -295,8 +299,8 @@ class QTOptimizer:
         # check if we still have random hyperparameters to evaluate
         if self.initial_random_index < len(self.init_conf_indices):
             self.logger.info(
-                'Not enough configurations to build a model. '
-                'Returning randomly sampled configuration'
+                "Not enough configurations to build a model. "
+                "Returning randomly sampled configuration"
             )
 
             random_indice = self.init_conf_indices[self.initial_random_index]
@@ -305,13 +309,12 @@ class QTOptimizer:
 
             return random_indice, budget
         else:
-            mean_predictions, std_predictions, costs, hp_indices, non_scaled_budgets = self._predict()
+            mean_predictions, std_predictions, costs, hp_indices, non_scaled_budgets = (
+                self._predict()
+            )
 
             best_prediction_index = self.find_suggested_config(
-                mean_predictions,
-                std_predictions,
-                non_scaled_budgets,
-                costs
+                mean_predictions, std_predictions, non_scaled_budgets, costs
             )
             """
             the best prediction index is not always matching with the actual hp index.
@@ -367,7 +370,7 @@ class QTOptimizer:
 
         observe_time_start = time.time()
 
-        #self.examples[hp_index] = np.arange(b + 1).tolist()
+        # self.examples[hp_index] = np.arange(b + 1).tolist()
         self.examples[hp_index] = np.arange(1, b + 1).tolist()
         self.performances[hp_index] = learning_curve
 
@@ -377,7 +380,11 @@ class QTOptimizer:
         else:
             self.no_improvement_patience += 1
 
-        if alg_time is not None and self.cost_trainer is not None and len(self.info_dict)>0:
+        if (
+            alg_time is not None
+            and self.cost_trainer is not None
+            and len(self.info_dict) > 0
+        ):
             self.cost_trainer.info_dict = self.info_dict
             self.cost_trainer.train()
 
@@ -399,7 +406,9 @@ class QTOptimizer:
             train_time_duration = train_time_end - train_time_start
 
         observe_time_duration = observe_time_end - observe_time_start
-        overhead_time = observe_time_duration + self.suggest_time_duration + train_time_duration
+        overhead_time = (
+            observe_time_duration + self.suggest_time_duration + train_time_duration
+        )
         if alg_time is not None:
             total_duration = overhead_time + alg_time
         else:
@@ -447,7 +456,7 @@ class QTOptimizer:
                 max_budget = max(budgets)
                 next_budget = max_budget + self.fantasize_step
                 # take the learning curve until the point we have evaluated so far
-                #curve = self.performances[hp_index][:max_budget - 1] if max_budget > 1 else [0.0]
+                # curve = self.performances[hp_index][:max_budget - 1] if max_budget > 1 else [0.0]
                 curve = self.performances[hp_index][:max_budget]
                 # if the curve is shorter than the length of the kernel size,
                 # pad it with zeros
@@ -495,8 +504,8 @@ class QTOptimizer:
                 train_examples.append(example)
                 train_budgets.append(budget)
                 train_labels.append(performance)
-                train_curve = performances[:budget - 1] if budget > 1 else [0.0]
-                #difference_curve_length = self.surrogate_config['cnn_kernel_size']- len(train_curve)
+                train_curve = performances[: budget - 1] if budget > 1 else [0.0]
+                # difference_curve_length = self.surrogate_config['cnn_kernel_size']- len(train_curve)
                 difference_curve_length = self.max_benchmark_epochs - len(train_curve)
                 if difference_curve_length > 0:
                     train_curve.extend([0.0] * difference_curve_length)
@@ -511,8 +520,8 @@ class QTOptimizer:
         mean: float,
         std: float,
         explore_factor: Optional[float] = 0.25,
-        acq_fc: str = 'ei',
-        cost: Optional[float] = 1
+        acq_fc: str = "ei",
+        cost: Optional[float] = 1,
     ) -> float:
         """
         The acquisition function that will be called
@@ -537,27 +546,28 @@ class QTOptimizer:
         acq_value: float
             The value of the acquisition function.
         """
-        if acq_fc == 'ei':
+        if acq_fc == "ei":
             if std == 0:
                 return 0
             z = (mean - best_value - explore_factor) / std
-            acq_value = (mean - best_value - explore_factor) * norm.cdf(z) + std * norm.pdf(z)
-        elif acq_fc == 'ucb':
+            acq_value = (mean - best_value - explore_factor) * norm.cdf(
+                z
+            ) + std * norm.pdf(z)
+        elif acq_fc == "ucb":
             acq_value = mean + explore_factor * std
-        elif acq_fc == 'thompson':
+        elif acq_fc == "thompson":
             acq_value = np.random.normal(mean, std)
-        elif acq_fc == 'exploit':
+        elif acq_fc == "exploit":
             acq_value = mean
         else:
             raise NotImplementedError(
-                f'Acquisition function {acq_fc} has not been'
-                f'implemented',
+                f"Acquisition function {acq_fc} has not been" f"implemented",
             )
 
         if cost != 0:
-            return acq_value/cost
+            return acq_value / cost
         else:
-            return acq_value/(1e-4)
+            return acq_value / (1e-4)
 
     def find_suggested_config(
         self,
@@ -587,9 +597,14 @@ class QTOptimizer:
             budget = int(budgets[index])
             cost = costs[index] if costs is not None else 1
             best_value = self.calculate_fidelity_ymax(budget)
-            acq_value = self.acq(best_value, mean_value, std, acq_fc=self.acq_fc,
-                                                                explore_factor=self.explore_factor,
-                                                                cost = cost)
+            acq_value = self.acq(
+                best_value,
+                mean_value,
+                std,
+                acq_fc=self.acq_fc,
+                explore_factor=self.explore_factor,
+                cost=cost,
+            )
             if acq_value > highest_acq_value:
                 highest_acq_value = acq_value
                 best_index = index
@@ -654,32 +669,34 @@ class QTOptimizer:
             overhead: The total overhead (in seconds) of the iteration.
         """
         hp_index = int(hp_index)
-        if 'hp' in self.info_dict:
-            self.info_dict['hp'].append(hp_index)
+        if "hp" in self.info_dict:
+            self.info_dict["hp"].append(hp_index)
         else:
-            self.info_dict['hp'] = [hp_index]
+            self.info_dict["hp"] = [hp_index]
 
-        if 'scores' in self.info_dict:
-            self.info_dict['scores'].append(performance)
+        if "scores" in self.info_dict:
+            self.info_dict["scores"].append(performance)
         else:
-            self.info_dict['scores'] = [performance]
+            self.info_dict["scores"] = [performance]
 
-        if 'curve' in self.info_dict:
-            self.info_dict['curve'].append(self.best_value_observed)
+        if "curve" in self.info_dict:
+            self.info_dict["curve"].append(self.best_value_observed)
         else:
-            self.info_dict['curve'] = [self.best_value_observed]
+            self.info_dict["curve"] = [self.best_value_observed]
 
-        if 'epochs' in self.info_dict:
-            self.info_dict['epochs'].append(budget)
+        if "epochs" in self.info_dict:
+            self.info_dict["epochs"].append(budget)
         else:
-            self.info_dict['epochs'] = [budget]
+            self.info_dict["epochs"] = [budget]
 
-        if 'overhead' in self.info_dict:
-            self.info_dict['overhead'].append(overhead)
+        if "overhead" in self.info_dict:
+            self.info_dict["overhead"].append(overhead)
         else:
-            self.info_dict['overhead'] = [overhead]
+            self.info_dict["overhead"] = [overhead]
 
-        with open(os.path.join(self.output_path, f'{self.dataset_name}_{self.seed}.json'), 'w') as fp:
+        with open(
+            os.path.join(self.output_path, f"{self.dataset_name}_{self.seed}.json"), "w"
+        ) as fp:
             json.dump(self.info_dict, fp)
 
     def preprocess_hp_candidates(self) -> List:
@@ -696,7 +713,9 @@ class QTOptimizer:
         for hp_candidate in self.hp_candidates:
             new_hp_candidate = []
             for index, hp_value in enumerate(hp_candidate):
-                new_hp_candidate.append(math.log(hp_value) if self.log_indicator[index] else hp_value)
+                new_hp_candidate.append(
+                    math.log(hp_value) if self.log_indicator[index] else hp_value
+                )
 
             log_hp_candidates.append(new_hp_candidate)
 
@@ -734,16 +753,28 @@ class QTOptimizer:
 
         valid_values = None
         if hp_name in ["pct_to_freeze", "lr", "warmp_lr", "weight_decay"]:
-            #clap value to range
+            # clap value to range
             hp_value = max(0.0, min(1.0, hp_value))
 
-        elif hp_name in ["trivial_augment", "random_augment", "auto_augment", \
-                            "linear_probing", "stoch_norm"]:
-            valid_values = [0,1]
+        elif hp_name in [
+            "trivial_augment",
+            "random_augment",
+            "auto_augment",
+            "linear_probing",
+            "stoch_norm",
+        ]:
+            valid_values = [0, 1]
 
-        elif hp_name in ["patience_epochs", "ra_num_ops", "ra_magnitude", \
-                         "decay_epochs",  "epochs", "batch_size", "num_classes",
-                         "warmup_epochs"] :
+        elif hp_name in [
+            "patience_epochs",
+            "ra_num_ops",
+            "ra_magnitude",
+            "decay_epochs",
+            "epochs",
+            "batch_size",
+            "num_classes",
+            "warmup_epochs",
+        ]:
             hp_value = int(hp_value)
 
         elif hp_name == "clip_grad":
@@ -752,9 +783,8 @@ class QTOptimizer:
         elif hp_name == "layer_decay":
             valid_values = [-1] + [0.65, 0.75]
 
-
         if valid_values is not None:
-            hp_value = valid_values[np.digitize(hp_value, valid_values)-1]
+            hp_value = valid_values[np.digitize(hp_value, valid_values) - 1]
 
         return hp_value
 
@@ -764,23 +794,27 @@ class QTOptimizer:
         Returns:
             qt_config: The hyperparameter configuration in the qt format.
         """
-        assert len(values) == len(self.hp_names), 'The number of hyperparameters does not match the number of values.'
-        categorical_hp = {"auto_augment" : ["",-1000],
-                         "model" : ["", -1000],
-                         "opt_betas" : ["", -1000],
-                         "opt": ["", -1000],
-                         "sched": ["", -1000]}
+        assert len(values) == len(
+            self.hp_names
+        ), "The number of hyperparameters does not match the number of values."
+        categorical_hp = {
+            "auto_augment": ["", -1000],
+            "model": ["", -1000],
+            "opt_betas": ["", -1000],
+            "opt": ["", -1000],
+            "sched": ["", -1000],
+        }
         qt_config = {}
 
         for hp_name, hp_value in zip(self.hp_names, values):
             hp_value = self.project_to_valid_range(hp_name, hp_value)
 
-            if hp_name.startswith('cat__'):
+            if hp_name.startswith("cat__"):
 
                 for hp in categorical_hp:
                     if hp_name.startswith(f"cat__{hp}_"):
                         hp_category = hp_name.split(f"{hp}_")[-1]
-                        if hp_category.startswith("betas"): #fails with opt_betas
+                        if hp_category.startswith("betas"):  # fails with opt_betas
                             continue
                         if categorical_hp[hp][1] < hp_value:
                             categorical_hp[hp] = [hp_category, hp_value]
@@ -800,267 +834,3 @@ class QTOptimizer:
                 else:
                     qt_config[hp] = categorical_hp[hp][0]
         return qt_config
-
-
-
-class RandomSearchOptimizer:
-
-        def __init__(self, metadataset,  seed):
-            self.hp_candidates = metadataset.get_hyperparameters_candidates().values.tolist()
-            self.metadataset = metadataset
-            self.seed = seed
-            self.rng = np.random.RandomState(seed)
-            self.converged_configs = []
-
-        def suggest(self):
-            hp_index = self.rng.randint(0, len(self.hp_candidates))
-            budget = self.metadataset.get_curve_len(hp_index)
-            return hp_index, budget
-
-        def observe(self, hp_index, budget, performance_curve, observed_cost):
-            return 0
-
-
-
-def BO(optimizer, metadataset, budget_limit, scale_curve=True,
-                                                limit_by_cost=True,
-                                                observe_cost=False):
-
-    evaluated_configs = dict()
-    optimizer_performance = [0]
-    optimizer_budget = [0]
-    optimizer_cost = [0]
-    current_budget = optimizer_cost[-1] if limit_by_cost else optimizer_budget[-1]
-
-    while current_budget < budget_limit:
-
-        hp_index, budget = optimizer.suggest()
-        print(f"Suggested conf: {hp_index}, budget: {budget}")
-        cost = metadataset.get_curve_cost(hp_index, budget)
-
-        if budget >= metadataset.get_curve_len(hp_index)-1:
-            optimizer.converged_configs.append(hp_index)
-
-        if len(optimizer.converged_configs) == len(optimizer.hp_candidates):
-            print("All configs converged")
-            break
-
-        cost_curve_eval = metadataset.get_curve(hp_index, budget, curve_name="eval_time")
-        cost_curve_train = metadataset.get_curve(hp_index, budget, curve_name="train_time")
-        cost_curve = [x+y for x,y in zip(cost_curve_eval, cost_curve_train)]
-
-        #cost_curve = np.cumsum(cost_curve).tolist()
-        performance_curve = metadataset.get_curve(hp_index, budget)
-
-        if scale_curve:
-            performance_curve = [x/100 for x in performance_curve]
-
-        if observe_cost:
-            #this might break when we observe more than one epoch per step
-            observed_cost = cost_curve[-1]
-        else:
-            observed_cost = None
-        overhead_time = optimizer.observe(hp_index, budget, performance_curve, observed_cost)
-
-        if hp_index in evaluated_configs:
-            previous_state = evaluated_configs[hp_index]
-            budget_increment = budget - previous_state[0]
-            evaluated_configs[hp_index] = (budget, cost)
-        else:
-            budget_increment = budget
-            evaluated_configs[hp_index] = (budget, cost)
-
-        optimizer_budget.extend([i for i in range(optimizer_budget[-1]+1, optimizer_budget[-1]+budget_increment+1)])
-        temp_cost = cost_curve[budget-budget_increment:budget]
-        temp_cost = [x+overhead_time for x in temp_cost]
-        optimizer_cost.extend(temp_cost)
-        optimizer_performance.extend(performance_curve[budget-budget_increment:budget])
-        current_budget = sum(optimizer_cost) if limit_by_cost else optimizer_budget[-1]
-
-
-    for i in range(1,len(optimizer_performance)):
-        max_perf = max(optimizer_performance[i-1:i+1])
-        optimizer_performance[i] = max_perf
-        optimizer_cost[i] += optimizer_cost[i-1]
-
-    return optimizer_budget, optimizer_cost, optimizer_performance
-
-
-def prepare_qt_optimizer(metadataset, name = "qt_meta_trained",
-                                         output_dir = "output",
-                                         num_hps = 70,
-                                         output_dim = 32,
-                                         hidden_dim = 64,
-                                         output_dim_metafeatures = 16,
-                                         freeze_feature_extractor = False,
-                                         new_dataset_name = None,
-                                         dataset_name = None,
-                                         fantasize_step = 1,
-                                         minimization = False,
-                                         explore_factor = 0.1,
-                                         acqf_fc = "ei",
-                                         seed = 100,
-                                         budget_limit = 500,
-                                         learning_rate = 0.001,
-                                         meta_learning_rate = 0.01,
-                                         max_budget = 50,
-                                         include_metafeatures = True,
-                                         with_scheduler = True,
-                                         load_meta_trained = False,
-                                         device = "cuda",
-                                         train_iter = 1000,
-                                         log_indicator = None,
-                                         meta_train = False,
-                                         cost_aware = False,
-                                         load_cost_predictor = False,
-                                         use_encoders_for_model = False,
-                                         meta_output_dir = "output",
-                                         split_id =0,
-                                         augmentation_id = None,
-                                         observe_cost = False,
-                                         target_model = None,
-                                         test_generalization_to_model = False,
-                                         use_only_target_model=False,
-                                         subsample_models_in_hub=None,
-                                         file_with_init_indices=None,
-                                         cost_trainer_iter=50,
-                                         input_dim_curves=1):
-
-    train_splits, test_splits, val_splits = SPLITS[split_id]
-    hp_names = metadataset.get_hyperparameters_names()
-    hyperparameter_candidates = metadataset.get_hyperparameters_candidates().values.tolist()
-
-    if metadataset.load_only_dataset_descriptors:
-        input_dim_metafeatures = 4
-    else:
-        input_dim_metafeatures = 7684
-
-    if use_encoders_for_model:
-        models_input_id = [i for i, x in enumerate(hp_names) if x.startswith("cat__model_")]
-        encoder_dim_ranges = [(models_input_id[0], models_input_id[-1]), (models_input_id[-1], len(hp_names))]
-    else:
-        encoder_dim_ranges = None
-
-    surrogate_output_dim_metafeatures = output_dim_metafeatures if include_metafeatures else 0
-    feature_extractor = FeatureExtractor(input_dim_hps=num_hps,
-                                         output_dim=output_dim,
-                                         input_dim_curves=input_dim_curves,
-                                         hidden_dim=hidden_dim,
-                                         output_dim_metafeatures=surrogate_output_dim_metafeatures,
-                                         input_dim_metafeatures=input_dim_metafeatures,
-                                         encoder_dim_ranges=encoder_dim_ranges)
-
-
-    model = DyHPO(device=torch.device(device),
-                  dataset_name=new_dataset_name,
-                  output_path=output_dir,
-                  seed=seed,
-                  feature_extractor=feature_extractor,
-                  output_dim=output_dim,
-                  include_metafeatures=include_metafeatures)
-    metadataset.set_dataset_name(dataset_name, augmentation_id=augmentation_id)
-    metafeatures = torch.FloatTensor(metadataset.get_metafeatures()).to(device)/10000
-    model.metafeatures = metafeatures
-
-    if file_with_init_indices is not None:
-        with open(file_with_init_indices, "r") as f:
-            init_conf_indices = json.load(f)[dataset_name]
-    else:
-        init_conf_indices = None
-
-    optimizer = QTOptimizer(
-        hyperparameter_candidates,
-        log_indicator,
-        hp_names=hp_names,
-        model=model,
-        seed=seed,
-        max_benchmark_epochs=max_budget,
-        fantasize_step=fantasize_step,
-        minimization=minimization,
-        dataset_name=new_dataset_name,
-        output_path=output_dir,
-        explore_factor=explore_factor,
-        acqf_fc=acqf_fc,
-        learning_rate=learning_rate,
-        device = device,
-        init_conf_indices=init_conf_indices
-    )
-
-    if (target_model is not None) and test_generalization_to_model:
-        metadataset.set_action_on_model( target_model, "omit_it")
-        metadataset.set_dataset_name(dataset_name, augmentation_id=augmentation_id)
-
-    if (target_model is not None) and (not test_generalization_to_model) and use_only_target_model:
-        metadataset.set_action_on_model(target_model, "omit_the_rest", )
-        metadataset.set_dataset_name(dataset_name, augmentation_id=augmentation_id)
-
-    if subsample_models_in_hub is not None:
-        metadataset.set_subsample_models(subsample_models_in_hub)
-        metadataset.set_dataset_name(dataset_name, augmentation_id=augmentation_id)
-
-    if observe_cost or cost_aware:
-        cost_predictor = CostPredictor(input_dim_hps=num_hps,
-                                   output_dim_feature_extractor=output_dim,
-                                   input_dim_curves=input_dim_curves,
-                                   hidden_dim=hidden_dim,
-                                   output_dim_metafeatures=output_dim_metafeatures,
-                                   input_dim_metafeatures=input_dim_metafeatures)
-
-        cost_trainer = CostPredictorTrainer(cost_predictor, metadataset,
-                                            checkpoint_path=os.path.join(meta_output_dir, f"{name}_cost_{split_id}.pt"),
-                                            train_splits=train_splits,
-                                            val_splits=val_splits,
-                                            test_splits=test_splits,
-                                            train_iter = train_iter
-                                            )
-
-        if cost_aware: # train cost predictor, TODO: chnage  cost_aware to train_cost_predictor
-            if load_cost_predictor:
-                cost_trainer.load_checkpoint()
-
-            else:
-                cost_trainer.train()
-                cost_trainer.save_checkpoint()
-
-        cost_trainer.cost_predictor.to(device)
-        cost_trainer.train_iter = cost_trainer_iter
-        optimizer.model.set_cost_predictor(cost_predictor)
-
-        if observe_cost:
-            cost_trainer.finetuning = True
-            optimizer.cost_trainer = cost_trainer
-
-    if meta_train:
-        meta_checkpoint = os.path.join(meta_output_dir, f"{name}_{split_id}.pt")
-
-        if load_meta_trained:
-            model.meta_checkpoint = meta_checkpoint
-            model.load_checkpoint(meta_checkpoint)
-        else:
-            meta_trainer = MetaTrainer(model, metadataset, train_iter=train_iter,
-                                       device=optimizer.device,
-                                       learning_rate=meta_learning_rate,
-                                       with_scheduler=with_scheduler,
-                                       include_metafeatures=include_metafeatures,
-                                       train_splits=train_splits,
-                                       val_splits=val_splits,
-                                       test_splits=test_splits
-                                       )
-            model.meta_checkpoint = meta_checkpoint
-            val_error = meta_trainer.meta_train()
-            model.save_checkpoint(checkpoint_file=meta_checkpoint)
-            print("Val error:", val_error)
-
-        if freeze_feature_extractor:
-            optimizer.model.feature_extractor.freeze()
-            optimizer.model.original_feature_extractor.freeze()
-
-        #model.checkpoint_file = dataset_checkpoint
-        #metadataset.set_dataset_name(dataset_name, augmentation_id=augmentation_id) #metraining changes the dataset name
-
-    if (target_model is not None) and test_generalization_to_model or use_only_target_model:
-        metadataset.set_action_on_model( target_model, "omit_the_rest")
-
-    metadataset.set_dataset_name(dataset_name, augmentation_id=augmentation_id)
-
-    return optimizer

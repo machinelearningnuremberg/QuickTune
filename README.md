@@ -58,30 +58,35 @@ wget https://rewind.tf.uni-freiburg.de/index.php/s/oMxC5sfrkA53ESo/download/qt_m
 unzip QT_metadataset.zip
 ```
 
-Run example:
+Run examples:
 ```
 mkdir output
-python bash_scripts/run_example.sh
+#quicktune on micro
+python bash_scripts/run_micro.sh
+#quicktune on mini
+python bash_scripts/run_mini.sh
+#quicktune on extended
+python bash_scripts/run_extended.sh
 ```
 
 
 ## Run on a new dataset
 
-For running on a new dataset, make sure to wrap the folder as specified in Timm Library. You try on included datasets such as Inaturalist:
+For finetuning a new dataset, you can use the following examples as reference. Make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution. 
 
 ```
-python hpo/optimizers/quicktune/user_interface.py --data_path datasets/inat 
-						--dataset_name torch/inaturalist 
-						--num_classes 13 
-						--num_channels 3 
-						--image_size 128 
-						--verbose 
-						--dataset_size 2700000 
-						--train_split kingdom/2021_train_mini 
-						--val_split kingdom/validation 
-						--experiment_id  qt-test
-						--optimizer_name qt-extended 
-						--budget_limit 88000
+#example on imagenett2-320
+cd data
+wget https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz
+
+tar -xvzf imagenette2-320.tgz
+cd.. #back to root folder
+
+#before this execute quicktune on mini (above)
+python bash_scripts/run_imagenette.sh
+
+#before this execute quicktune on extended (above)
+python bash_scripts/run_inaturalist.sh
 ```
 
 

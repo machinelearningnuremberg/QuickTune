@@ -1,0 +1,1 @@
+python user_interface.py --data_path data/inat --dataset_name torch/inaturalist --num_classes 13 --num_channels 3 --image_size 128 --verbose --dataset_size 2700000 --train_split kingdom/2021_train_mini --val_split kingdom/validation --experiment_id qt_metalearned_extended_inat --optimizer_name qt_metalearned_extended --budget_limit 57600 --dataset_download

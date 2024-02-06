@@ -32,7 +32,8 @@ def time_out_eval(*args, **kwargs):
 def eval_finetune_conf(conf, task_info, budget=1, experiment="test",
                                                     output= "../experiments/output/temp/",
                                                     data_path="../datasets/meta-album",
-                                                    verbose=False):
+                                                    verbose=False,
+                                                    dataset_download=False):
 
     parser = build_parser()
     if "amp" in conf:
@@ -95,6 +96,8 @@ def eval_finetune_conf(conf, task_info, budget=1, experiment="test",
     resume_path = os.path.join(output_dir, "last.pth.tar")
     if os.path.exists(resume_path):
         suffix += f" --resume {resume_path}"
+    if dataset_download:
+        suffix += " --dataset_download"
     argString = f"{prefix} --batch_size {batch_size} --bss_reg {bss_reg} --cotuning_reg {cotuning_reg} --cutmix {cutmix} --delta_reg {delta_reg} --drop {drop} --lr {lr} --mixup {mixup} --mixup_prob {mixup_prob} --model {model} --opt {opt} --pct_to_freeze {pct_to_freeze} --smoothing {smoothing} --sp_reg {sp_reg} --warmup_epochs {warmup_epochs} --warmup_lr {warmup_lr} --weight_decay {weight_decay} --dataset {dataset} --train-split {train_split} --val-split {val_split} --experiment {experiment} --output {output} --pretrained --checkpoint_hist 1 --num_classes {num_classes} --epochs 50 --epochs_step {budget} --workers 1 " + suffix
     argString = argString.replace("\n", "")
     argString = argString.split(" ")

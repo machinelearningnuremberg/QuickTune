@@ -453,8 +453,6 @@ if __name__ == "__main__":
     parser.add_argument("--optimizer_name", type=str, default=None)
     parser.add_argument("--search_space_version", type=str, default="v6")
 
-    #run example: --data_path datasets/others/ --dataset_name imagenette2-320 --num_classes 10 --verbose
-    #example descriptor: [[22391, 50, 128, 3]]
     args = parser.parse_args()
 
     device = args.device
