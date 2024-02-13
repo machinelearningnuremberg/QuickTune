@@ -18,10 +18,9 @@ conda install gpytorch -c gpytorch
 
 
 
-## Fine-tune Network (Directly)
+## Fine-tune a pipeline (fixed Hyperparameters)
 
-
-Download a dataset. In this example, we will use a dataset from meta-album. The metadataset curves were generated in this way.
+You can download a dataset and fine-tune a pipeline. In this example, we will use a dataset from meta-album. The metadataset curves were generated in this way.
 
 ```bash
 mkdir data && cd data
@@ -47,7 +46,7 @@ python finetune.py data --model dla46x_c \
 ```
 
 
-## Run Quick-Tune on Meta-dataset
+## Run Quick-Tune on meta-dataset
 
 Download QuickTune meta-dataset:
 
@@ -69,7 +68,7 @@ python bash_scripts/run_extended.sh
 ```
 
 
-## Run on a New Dataset
+## Run on a new dataset
 
 For finetuning a new dataset, you can use the following examples as reference. Make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution. 
 
