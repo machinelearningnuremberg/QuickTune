@@ -34,7 +34,7 @@ You can fine-tune network by providing any hyperparameter as follows:
 ```bash
 mkdir output 
 python finetune.py data --model dla46x_c \
-					--pct_to_freeze 0.8\
+					--pct_to_freeze 0.8 \
 					--dataset "mtlb/PLT_VIL_Micro"\
 					--train-split train \
 					--val-split val  \
@@ -70,10 +70,10 @@ python bash_scripts/run_extended.sh
 
 ## Run on a new dataset
 
-For finetuning a new dataset, you can use the following examples as reference. Make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution. 
+For finetuning a new dataset, you can use the following examples as a reference. They run QuickTune on *Imagenette2-320* and *Inaturalist*.
 
 ```bash
-#example on imagenett2-320
+#example on imagenette2-320
 cd data
 wget https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz
 
@@ -86,5 +86,7 @@ python bash_scripts/run_imagenette.sh
 #before this execute quicktune on extended (above)
 python bash_scripts/run_inaturalist.sh
 ```
+
+If you use any other dataset, make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution as presented in the example bash scripts. 
 
 
