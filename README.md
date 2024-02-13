@@ -78,7 +78,7 @@ cd data
 wget https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz
 
 tar -xvzf imagenette2-320.tgz
-cd.. #back to root folder
+cd .. #back to root folder
 
 #before this execute quicktune on mini (above)
 python bash_scripts/run_imagenette.sh
