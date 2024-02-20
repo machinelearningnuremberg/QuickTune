@@ -1,6 +1,6 @@
 # QuickTune
 
-![Architecture](figures/figure.png)
+![Architecture](figures/figure.svg)
 
 ## Prepare environment
 Create environment and install requirements:
