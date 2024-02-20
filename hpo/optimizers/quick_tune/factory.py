@@ -64,7 +64,7 @@ def create_qt_optimizer(
         - Filters the meta-train data and the meta-dataset (used during BO)
         - Builds the cost and performance predictors
         - Metatrains the cost and performance predictor
-        """
+    """
 
     train_splits, test_splits, val_splits = SPLITS[split_id]
     hp_names = metadataset.get_hyperparameters_names()

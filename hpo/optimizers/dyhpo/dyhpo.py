@@ -15,6 +15,7 @@ class GPRegressionModel(gpytorch.models.ExactGP):
     """
     A simple GP model.
     """
+
     def __init__(
         self,
         train_x: torch.Tensor,
@@ -45,20 +46,21 @@ class DyHPO:
     """
     The DyHPO DeepGP model. This version of DyHPO also includes a Cost Predictor
     """
+
     def __init__(
         self,
         device: torch.device,
-        dataset_name: str = 'unknown',
-        output_path: str = '.',
+        dataset_name: str = "unknown",
+        output_path: str = ".",
         seed: int = 11,
-        output_dim = None,
-        feature_extractor = None,
-        batch_size = 64,
-        nr_epochs = 1000,
-        early_stopping_patience = 10,
-        learning_rate = 0.001,
-        include_metafeatures = True,
-        meta_checkpoint = None
+        output_dim=None,
+        feature_extractor=None,
+        batch_size=64,
+        nr_epochs=1000,
+        early_stopping_patience=10,
+        learning_rate=0.001,
+        include_metafeatures=True,
+        meta_checkpoint=None,
     ):
         """
         The constructor for the DyHPO model.
@@ -82,18 +84,22 @@ class DyHPO:
         self.dev = device
         self.seed = seed
         self.output_dim = output_dim
-        self.model, self.likelihood, self.mll = \
-            self.get_model_likelihood_mll(
-                self.output_dim
-            )
+        self.model, self.likelihood, self.mll = self.get_model_likelihood_mll(
+            self.output_dim
+        )
 
         self.model.to(self.dev)
         self.likelihood.to(self.dev)
         self.feature_extractor.to(self.dev)
 
-        self.optimizer = torch.optim.Adam([
-            {'params': self.model.parameters(), 'lr': self.learning_rate},
-            {'params': self.feature_extractor.parameters(), 'lr': self.learning_rate}],
+        self.optimizer = torch.optim.Adam(
+            [
+                {"params": self.model.parameters(), "lr": self.learning_rate},
+                {
+                    "params": self.feature_extractor.parameters(),
+                    "lr": self.learning_rate,
+                },
+            ],
         )
 
         # the number of initial points for which we will retrain fully from scratch
@@ -109,18 +115,15 @@ class DyHPO:
 
         self.checkpoint_path = os.path.join(
             output_path,
-            'checkpoints',
-            f'{dataset_name}',
-            f'{self.seed}',
+            "checkpoints",
+            f"{dataset_name}",
+            f"{self.seed}",
         )
 
         os.makedirs(self.checkpoint_path, exist_ok=True)
 
         self.metafeatures = None
-        self.checkpoint_file = os.path.join(
-            self.checkpoint_path,
-            'checkpoint.pth'
-        )
+        self.checkpoint_file = os.path.join(self.checkpoint_path, "checkpoint.pth")
         self.cost_aware = False
         self.include_metafeatures = include_metafeatures
         self.meta_checkpoint = meta_checkpoint
@@ -129,30 +132,39 @@ class DyHPO:
         self.cost_predictor = cost_predictor
         self.cost_aware = True
 
-
     def restart_optimization(self):
         """
         Restart the surrogate model from scratch.
         """
         if self.meta_checkpoint is None:
-            self.feature_extractor = copy.deepcopy(self.original_feature_extractor).to(self.dev)
-            self.model, self.likelihood, self.mll = \
-                self.get_model_likelihood_mll(
-                    self.output_dim,
-                )
+            self.feature_extractor = copy.deepcopy(self.original_feature_extractor).to(
+                self.dev
+            )
+            self.model, self.likelihood, self.mll = self.get_model_likelihood_mll(
+                self.output_dim,
+            )
 
         else:
             self.load_checkpoint(self.meta_checkpoint)
 
-        self.optimizer = torch.optim.Adam([
-            {'params': self.model.parameters(), 'lr': self.learning_rate},
-            {'params': self.feature_extractor.parameters(), 'lr': self.learning_rate}]
+        self.optimizer = torch.optim.Adam(
+            [
+                {"params": self.model.parameters(), "lr": self.learning_rate},
+                {
+                    "params": self.feature_extractor.parameters(),
+                    "lr": self.learning_rate,
+                },
+            ]
         )
 
     def get_model_likelihood_mll(
         self,
         train_size: int,
-    ) -> Tuple[GPRegressionModel, gpytorch.likelihoods.GaussianLikelihood, gpytorch.mlls.ExactMarginalLogLikelihood]:
+    ) -> Tuple[
+        GPRegressionModel,
+        gpytorch.likelihoods.GaussianLikelihood,
+        gpytorch.mlls.ExactMarginalLogLikelihood,
+    ]:
         """
         Called when the surrogate is first initialized or restarted.
         Args:
@@ -165,13 +177,22 @@ class DyHPO:
         train_y = torch.ones(train_size).to(self.dev)
 
         likelihood = gpytorch.likelihoods.GaussianLikelihood().to(self.dev)
-        model = GPRegressionModel(train_x=train_x, train_y=train_y, likelihood=likelihood).to(self.dev)
+        model = GPRegressionModel(
+            train_x=train_x, train_y=train_y, likelihood=likelihood
+        ).to(self.dev)
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model).to(self.dev)
 
         return model, likelihood, mll
 
-
-    def train_step(self, X_train, y_train, train_budgets, train_curves, epoch_nr, meta_features=None):
+    def train_step(
+        self,
+        X_train,
+        y_train,
+        train_budgets,
+        train_curves,
+        epoch_nr,
+        meta_features=None,
+    ):
         nr_examples_batch = X_train.size(dim=0)
         # if only one example in the batch, skip the batch.
         # Otherwise, the code will fail because of batchnorm
@@ -182,7 +203,9 @@ class DyHPO:
         self.optimizer.zero_grad()
 
         if meta_features is not None:
-            projected_x = self.feature_extractor(X_train, train_budgets, train_curves, meta_features)
+            projected_x = self.feature_extractor(
+                X_train, train_budgets, train_curves, meta_features
+            )
         else:
             projected_x = self.feature_extractor(X_train, train_budgets, train_curves)
         self.model.set_train_data(projected_x, y_train, strict=False)
@@ -192,18 +215,20 @@ class DyHPO:
         try:
             # Calc loss and backprop derivatives
             loss = -self.mll(output, self.model.train_targets)
-            loss_value = loss.detach().to('cpu').item()
+            loss_value = loss.detach().to("cpu").item()
             mse = gpytorch.metrics.mean_squared_error(output, self.model.train_targets)
             self.logger.debug(
-                f'Epoch {epoch_nr} - MSE {mse:.5f}, '
-                f'Loss: {loss_value:.3f}, '
-                f'lengthscale: {self.model.covar_module.base_kernel.lengthscale.item():.3f}, '
-                f'noise: {self.model.likelihood.noise.item():.3f}, '
+                f"Epoch {epoch_nr} - MSE {mse:.5f}, "
+                f"Loss: {loss_value:.3f}, "
+                f"lengthscale: {self.model.covar_module.base_kernel.lengthscale.item():.3f}, "
+                f"noise: {self.model.likelihood.noise.item():.3f}, "
             )
             loss.backward()
             self.optimizer.step()
         except Exception as training_error:
-            self.logger.error(f'The following error happened while training: {training_error}')
+            self.logger.error(
+                f"The following error happened while training: {training_error}"
+            )
             # An error has happened, trigger the restart of the optimization and restart
             # the model with default hyperparameters.
             self.restart = True
@@ -211,8 +236,9 @@ class DyHPO:
 
         return training_errored
 
-
-    def train_pipeline(self, data: Dict[str, torch.Tensor], load_checkpoint: bool = False):
+    def train_pipeline(
+        self, data: Dict[str, torch.Tensor], load_checkpoint: bool = False
+    ):
         """
         Train the surrogate model.
         Args:
@@ -222,7 +248,7 @@ class DyHPO:
                 or whether to start from scratch.
         """
         self.iterations += 1
-        self.logger.debug(f'Starting iteration: {self.iterations}')
+        self.logger.debug(f"Starting iteration: {self.iterations}")
         # whether the state has been changed. Basically, if a better loss was found during
         # this optimization iteration then the state (weights) were changed.
         weights_changed = False
@@ -231,22 +257,29 @@ class DyHPO:
             try:
                 self.load_checkpoint()
             except FileNotFoundError:
-                self.logger.error(f'No checkpoint file found at: {self.checkpoint_file}'
-                                  f'Training the GP from the beginning')
+                self.logger.error(
+                    f"No checkpoint file found at: {self.checkpoint_file}"
+                    f"Training the GP from the beginning"
+                )
 
         self.model.train()
         self.likelihood.train()
         self.feature_extractor.train()
 
-        self.optimizer = torch.optim.Adam([
-            {'params': self.model.parameters(), 'lr': self.learning_rate},
-            {'params': self.feature_extractor.parameters(), 'lr': self.learning_rate}],
+        self.optimizer = torch.optim.Adam(
+            [
+                {"params": self.model.parameters(), "lr": self.learning_rate},
+                {
+                    "params": self.feature_extractor.parameters(),
+                    "lr": self.learning_rate,
+                },
+            ],
         )
 
-        X_train = data['X_train']
-        train_budgets = data['train_budgets']
-        train_curves = data['train_curves']
-        y_train = data['y_train']
+        X_train = data["X_train"]
+        train_budgets = data["train_budgets"]
+        train_curves = data["train_curves"]
+        y_train = data["y_train"]
 
         initial_state = self.get_state()
         training_errored = False
@@ -271,8 +304,14 @@ class DyHPO:
                 batch_metafeatures = self.metafeatures.repeat(X_train.size(dim=0), 1)
             else:
                 batch_metafeatures = None
-            training_errored = self.train_step(X_train, y_train, train_budgets, train_curves, epoch_nr, batch_metafeatures)
-
+            training_errored = self.train_step(
+                X_train,
+                y_train,
+                train_budgets,
+                train_curves,
+                epoch_nr,
+                batch_metafeatures,
+            )
 
         """
         # metric too high, time to restart, or we risk divergence
@@ -288,7 +327,7 @@ class DyHPO:
         self,
         train_data: Dict[str, torch.Tensor],
         test_data: Dict[str, torch.Tensor],
-        to_numpy: bool = True
+        to_numpy: bool = True,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Args:
@@ -304,8 +343,12 @@ class DyHPO:
         self.feature_extractor.eval()
         self.likelihood.eval()
 
-        batch_metafeatures_train = self.metafeatures.repeat(train_data['X_train'].size(dim=0), 1)
-        batch_metafeatures_test = self.metafeatures.repeat(test_data['X_test'].size(dim=0), 1)
+        batch_metafeatures_train = self.metafeatures.repeat(
+            train_data["X_train"].size(dim=0), 1
+        )
+        batch_metafeatures_test = self.metafeatures.repeat(
+            test_data["X_test"].size(dim=0), 1
+        )
 
         batch_metafeatures_train_for_surrogate = None
         batch_metafeatures_test_for_surrogate = None
@@ -314,54 +357,80 @@ class DyHPO:
             batch_metafeatures_train_for_surrogate = batch_metafeatures_train
             batch_metafeatures_test_for_surrogate = batch_metafeatures_test
 
-
-        with torch.no_grad(): # gpytorch.settings.fast_pred_var():
+        with torch.no_grad():  # gpytorch.settings.fast_pred_var():
             projected_train_x = self.feature_extractor(
-                train_data['X_train'],
-                train_data['train_budgets'],
-                train_data['train_curves'],
-                train_data.get('train_metafeatures', batch_metafeatures_train_for_surrogate)
+                train_data["X_train"],
+                train_data["train_budgets"],
+                train_data["train_curves"],
+                train_data.get(
+                    "train_metafeatures", batch_metafeatures_train_for_surrogate
+                ),
             )
-            self.model.set_train_data(inputs=projected_train_x, targets=train_data['y_train'], strict=False)
+            self.model.set_train_data(
+                inputs=projected_train_x, targets=train_data["y_train"], strict=False
+            )
             projected_test_x = self.feature_extractor(
-                test_data['X_test'],
-                test_data['test_budgets'],
-                test_data['test_curves'],
-                test_data.get('test_metafeatures', batch_metafeatures_test_for_surrogate)
+                test_data["X_test"],
+                test_data["test_budgets"],
+                test_data["test_curves"],
+                test_data.get(
+                    "test_metafeatures", batch_metafeatures_test_for_surrogate
+                ),
             )
             preds = self.likelihood(self.model(projected_test_x))
 
             if self.cost_aware:
                 costs = self.cost_predictor(
-                    test_data['X_test'],
-                    test_data['test_budgets'],
-                    test_data['test_curves'],
-                     batch_metafeatures_test
+                    test_data["X_test"],
+                    test_data["test_budgets"],
+                    test_data["test_curves"],
+                    batch_metafeatures_test,
                 )
             else:
                 costs = None
         if to_numpy:
-            means = preds.mean.detach().to('cpu').numpy().reshape(-1, )
-            stds = preds.stddev.detach().to('cpu').numpy().reshape(-1, )
+            means = (
+                preds.mean.detach()
+                .to("cpu")
+                .numpy()
+                .reshape(
+                    -1,
+                )
+            )
+            stds = (
+                preds.stddev.detach()
+                .to("cpu")
+                .numpy()
+                .reshape(
+                    -1,
+                )
+            )
         else:
-            means = preds.mean.reshape(-1, )
-            stds = preds.stddev.reshape(-1, )
+            means = preds.mean.reshape(
+                -1,
+            )
+            stds = preds.stddev.reshape(
+                -1,
+            )
         return means, stds, costs
 
-    def load_checkpoint(self, checkpoint_file = None):
+    def load_checkpoint(self, checkpoint_file=None):
         """
         Load the state from a previous checkpoint.
         """
         if checkpoint_file is None:
             checkpoint_file = self.checkpoint_file
         checkpoint = torch.load(checkpoint_file)
-        self.model.load_state_dict(checkpoint['gp_state_dict'])
-        self.feature_extractor.load_state_dict(checkpoint['feature_extractor_state_dict'])
-        self.original_feature_extractor.load_state_dict(checkpoint['feature_extractor_state_dict'])
-        self.likelihood.load_state_dict(checkpoint['likelihood_state_dict'])
+        self.model.load_state_dict(checkpoint["gp_state_dict"])
+        self.feature_extractor.load_state_dict(
+            checkpoint["feature_extractor_state_dict"]
+        )
+        self.original_feature_extractor.load_state_dict(
+            checkpoint["feature_extractor_state_dict"]
+        )
+        self.likelihood.load_state_dict(checkpoint["likelihood_state_dict"])
 
-    def save_checkpoint(self, state: Dict =None,
-                              checkpoint_file: str = None):
+    def save_checkpoint(self, state: Dict = None, checkpoint_file: str = None):
         """
         Save the given state or the current state in a
         checkpoint file.
@@ -371,7 +440,6 @@ class DyHPO:
         """
         if checkpoint_file is None:
             checkpoint_file = self.checkpoint_file
-
 
         if state is None:
             torch.save(
@@ -392,12 +460,15 @@ class DyHPO:
                 the current state of the surrogate model.
         """
         current_state = {
-            'gp_state_dict': deepcopy(self.model.state_dict()),
-            'feature_extractor_state_dict': deepcopy(self.feature_extractor.state_dict()),
-            'likelihood_state_dict': deepcopy(self.likelihood.state_dict()),
+            "gp_state_dict": deepcopy(self.model.state_dict()),
+            "feature_extractor_state_dict": deepcopy(
+                self.feature_extractor.state_dict()
+            ),
+            "likelihood_state_dict": deepcopy(self.likelihood.state_dict()),
         }
 
         return current_state
+
 
 class ConvNet(nn.Module):
     def __init__(self, input_dim=1, output_dim=16):
@@ -455,27 +526,37 @@ class MLP(nn.Module):
         x = self.output_layer(x)
         return x
 
+
 class FeatureExtractor(nn.Module):
-    def __init__(self, configuration = {},
-                        input_dim_hps = None,
-                        output_dim = 32,
-                        input_dim_curves = 1,
-                        output_dim_curves=16,
-                        hidden_dim=128,
-                        input_dim_metafeatures=7684,
-                        output_dim_metafeatures=0,
-                        encoder_dim_ranges = None,
-                        encoder_num_layers = 1):
+    def __init__(
+        self,
+        configuration={},
+        input_dim_hps=None,
+        output_dim=32,
+        input_dim_curves=1,
+        output_dim_curves=16,
+        hidden_dim=128,
+        input_dim_metafeatures=7684,
+        output_dim_metafeatures=0,
+        encoder_dim_ranges=None,
+        encoder_num_layers=1,
+    ):
         super().__init__()
 
-        self.input_dim = configuration.get("input_dim_hps", input_dim_hps) \
-                        + configuration.get("output_dim_curves", output_dim_curves) \
-                        + configuration.get("output_dim_metafeatures", output_dim_metafeatures)
+        self.input_dim = (
+            configuration.get("input_dim_hps", input_dim_hps)
+            + configuration.get("output_dim_curves", output_dim_curves)
+            + configuration.get("output_dim_metafeatures", output_dim_metafeatures)
+        )
         self.output_dim = configuration.get("output_dim", output_dim)
         self.hidden_dim = configuration.get("hidden_dim", hidden_dim)
         self.input_dim_curves = configuration.get("input_dim_curves", input_dim_curves)
-        self.output_dim_curves = configuration.get("output_dim_curves", output_dim_curves)
-        self.output_dim_metafeatures = configuration.get("output_dim_metafeatures", output_dim_metafeatures)
+        self.output_dim_curves = configuration.get(
+            "output_dim_curves", output_dim_curves
+        )
+        self.output_dim_metafeatures = configuration.get(
+            "output_dim_metafeatures", output_dim_metafeatures
+        )
 
         assert self.input_dim is not None, "input_dim_hps must be specified"
 
@@ -484,19 +565,30 @@ class FeatureExtractor(nn.Module):
         if encoder_dim_ranges is not None:
             new_input_dim = 0
             for dim_range in encoder_dim_ranges:
-                self.encoders.append(MLP(dim_range[1] - dim_range[0], [hidden_dim] * encoder_num_layers, hidden_dim))
+                self.encoders.append(
+                    MLP(
+                        dim_range[1] - dim_range[0],
+                        [hidden_dim] * encoder_num_layers,
+                        hidden_dim,
+                    )
+                )
                 new_input_dim += hidden_dim
-            self.input_dim = new_input_dim + self.output_dim_curves + self.output_dim_metafeatures +1
+            self.input_dim = (
+                new_input_dim
+                + self.output_dim_curves
+                + self.output_dim_metafeatures
+                + 1
+            )
 
         self.fc1 = nn.Linear(self.input_dim, self.hidden_dim)
         self.fc2 = nn.Linear(self.hidden_dim, self.hidden_dim)
         self.fc3 = nn.Linear(self.hidden_dim, self.output_dim)
-        self.curve_embedder = ConvNet(input_dim=self.input_dim_curves,
-                                      output_dim=self.output_dim_curves)
-        self.fc_metafeatures = nn.Linear(input_dim_metafeatures, self.output_dim_metafeatures)
-
-
-
+        self.curve_embedder = ConvNet(
+            input_dim=self.input_dim_curves, output_dim=self.output_dim_curves
+        )
+        self.fc_metafeatures = nn.Linear(
+            input_dim_metafeatures, self.output_dim_metafeatures
+        )
 
     def forward(self, hps, budgets, curves, metafeatures=None):
 
@@ -525,10 +617,9 @@ class FeatureExtractor(nn.Module):
         x = self.fc1(x)
         x = nn.LeakyReLU()(x)
         output = self.fc3(x)
-        #output = nn.ReLU()(x)
+        # output = nn.ReLU()(x)
         return output
 
     def freeze(self):
         for param in self.parameters():
             param.requires_grad = False
-

@@ -37,7 +37,6 @@ class CostPredictor(nn.Module):
 
 
 class CostMetaLearner:
-
     """Meta-learns the cost predictor."""
 
     def __init__(

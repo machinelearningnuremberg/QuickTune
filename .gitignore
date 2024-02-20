@@ -8,3 +8,4 @@ experiments*
 .vscode/*
 logs/
 **.pyc
+plots/

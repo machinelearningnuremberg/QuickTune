@@ -1,5 +1,7 @@
 # QuickTune
 
+![Architecture](figures/figure.png)
+
 ## Prepare environment
 Create environment and install requirements:
 
@@ -16,10 +18,7 @@ conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit
 conda install gpytorch -c gpytorch
 ```
 
-
-
 ## Fine-tune Network (Directly)
-
 
 Download a dataset. In this example, we will use a dataset from meta-album. The metadataset curves were generated in this way.
 
@@ -66,6 +65,9 @@ python bash_scripts/run_micro.sh
 python bash_scripts/run_mini.sh
 #quicktune on extended
 python bash_scripts/run_extended.sh
+
+#generate the plot for an experiment
+python plots_generation/plot_results_benchmark.py --experiment_id qt_micro
 ```
 
 

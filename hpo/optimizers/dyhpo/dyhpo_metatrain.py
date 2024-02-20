@@ -3,7 +3,7 @@ from hpo.optimizers.performance_predictor import FeatureExtractor
 from hpo.optimizers.dyhpo.dyhpo import DyHPO, MetaTrainer
 import os
 
-if __name__ =="__main__":
+if __name__ == "__main__":
 
     aggregate_data = False
     aft_set = "micro"
@@ -12,7 +12,7 @@ if __name__ =="__main__":
     hidden_dim = 32
     device = "cuda"
     dataset_name = "test"
-    seed =  100
+    seed = 100
     output_path = "experiments/output/hpo/metatrained_dyhpo2/"
     train_iter = 1000
     device = "cuda"
@@ -29,29 +29,35 @@ if __name__ =="__main__":
             output_dim_metafeatures = 0
 
         metadataset = AFTMetaDataset(aggregate_data=aggregate_data, set=aft_set)
-        feature_extractor = FeatureExtractor(input_dim_hps=num_hps,
-                                             output_dim=output_dim,
-                                             input_dim_curves=1,
-                                             hidden_dim=hidden_dim,
-                                             output_dim_metafeatures=output_dim_metafeatures)
+        feature_extractor = FeatureExtractor(
+            input_dim_hps=num_hps,
+            output_dim=output_dim,
+            input_dim_curves=1,
+            hidden_dim=hidden_dim,
+            output_dim_metafeatures=output_dim_metafeatures,
+        )
 
-        model = DyHPO(    device=device,
-                                dataset_name=None,
-                                output_path=output_path,
-                                seed=seed,
-                                feature_extractor=feature_extractor,
-                                output_dim=output_dim)
-
-
+        model = DyHPO(
+            device=device,
+            dataset_name=None,
+            output_path=output_path,
+            seed=seed,
+            feature_extractor=feature_extractor,
+            output_dim=output_dim,
+        )
 
         model.checkpoint_file = os.path.join(output_path, f"dyhpo_meta_trained.pt")
 
-        meta_trainer = MetaTrainer(model, metadataset,  train_iter=train_iter,
-                                                        test_iter=test_iter,
-                                                        device=device,
-                                                        learning_rate=learning_rate,
-                                                        with_scheduler=with_scheduler,
-                                                        include_metafeatures=include_metafeatures)
+        meta_trainer = MetaTrainer(
+            model,
+            metadataset,
+            train_iter=train_iter,
+            test_iter=test_iter,
+            device=device,
+            learning_rate=learning_rate,
+            with_scheduler=with_scheduler,
+            include_metafeatures=include_metafeatures,
+        )
 
         val_error = meta_trainer.meta_train()
 
@@ -59,7 +65,9 @@ if __name__ =="__main__":
 
     for include_metafeatures in [False, True]:
         val_error = run()
-        print(f"+++Val error: {val_error}, include_metafeatures: {include_metafeatures}")
+        print(
+            f"+++Val error: {val_error}, include_metafeatures: {include_metafeatures}"
+        )
 
     for with_scheduler in [True, False]:
         val_error = run()
