@@ -59,7 +59,7 @@ wget https://rewind.tf.uni-freiburg.de/index.php/s/oMxC5sfrkA53ESo/download/qt_m
 unzip QT_metadataset.zip
 ```
 
-Run examples:
+Run examples on the meta-dataset:
 ```bash
 mkdir output
 #quicktune on micro
@@ -76,7 +76,7 @@ python plots_generation/plot_results_benchmark.py --experiment_id qt_micro
 
 ## Run on a new dataset
 
-For finetuning a new dataset, you can use the following examples as a reference. They run QuickTune on *Imagenette2-320* and *Inaturalist*.
+For *quick-tuning* on a new dataset, you can use the following examples as a reference. They run QuickTune on *Imagenette2-320* and *Inaturalist*.
 
 ```bash
 #example on imagenette2-320
