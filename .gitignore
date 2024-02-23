@@ -1,3 +1,4 @@
+source /home/pineda/anaconda3/bin/activate quick_tune
 TODO
 output/
 previous/
@@ -9,3 +10,6 @@ experiments*
 logs/
 **.pyc
 plots/
+!timm/data
+!output/qt_metalearned_extended/*
+!output/qt_metalearned_mini/*

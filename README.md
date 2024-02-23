@@ -63,11 +63,11 @@ Run examples on the meta-dataset:
 ```bash
 mkdir output
 #quicktune on micro
-python bash_scripts/run_micro.sh
+./bash_scripts/run_micro.sh
 #quicktune on mini
-python bash_scripts/run_mini.sh
+./bash_scripts/run_mini.sh
 #quicktune on extended
-python bash_scripts/run_extended.sh
+./bash_scripts/run_extended.sh
 
 #generate the plot for an experiment
 python plots_generation/plot_results_benchmark.py --experiment_id qt_micro
@@ -86,11 +86,11 @@ wget https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz
 tar -xvzf imagenette2-320.tgz
 cd .. #back to root folder
 
-#before this execute quicktune on mini (above)
-python bash_scripts/run_imagenette.sh
+#before this execute quicktune on mini (above) to create the optimizer
+./bash_scripts/run_imagenette.sh
 
-#before this execute quicktune on extended (above)
-python bash_scripts/run_inaturalist.sh
+#before this execute quicktune on extended (above)  to create the optimizer
+./bash_scripts/run_inaturalist.sh
 ```
 
 If you use any other dataset, make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution as presented in the example bash scripts. 
