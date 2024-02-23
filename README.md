@@ -86,10 +86,10 @@ wget https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz
 tar -xvzf imagenette2-320.tgz
 cd .. #back to root folder
 
-#before this execute quicktune on mini (above) to create the optimizer
+#before this, we executed quicktune on mini (above) to create the optimizer
 ./bash_scripts/run_imagenette.sh
 
-#before this execute quicktune on extended (above)  to create the optimizer
+#before this, we executed quicktune on extended (above) to create the optimizer
 ./bash_scripts/run_inaturalist.sh
 ```
 
