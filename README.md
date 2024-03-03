@@ -23,7 +23,7 @@ conda install gpytorch -c gpytorch
 
 
 
-## Fine-tune a pipeline (fixed Hyperparameters)
+## Finetune a pipeline (fixed Hyperparameters)
 
 You can download a dataset and fine-tune a pipeline. In this example, we will use a dataset from meta-album. The metadataset curves were generated in this way.
 
