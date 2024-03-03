@@ -70,6 +70,7 @@ mkdir output
 ./bash_scripts/run_extended.sh
 
 #generate the plot for an experiment
+#the plots are saved automatically in a folder called "plots"
 python plots_generation/plot_results_benchmark.py --experiment_id qt_micro
 ```
 
@@ -91,6 +92,9 @@ cd .. #back to root folder
 
 #before this, we executed quicktune on extended (above) to create the optimizer
 ./bash_scripts/run_inaturalist.sh
+
+#generate the plots and save them in a folder called "plots"
+python plots_generation/plots_results_user_interface.py
 ```
 
 If you use any other dataset, make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution as presented in the example bash scripts. 
