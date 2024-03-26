@@ -101,4 +101,17 @@ python plots_generation/plots_results_user_interface.py
 
 If you use any other dataset, make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution as presented in the example bash scripts. 
 
+## Citation
 
+You can cite our work as follows:
+
+```bib
+@inproceedings{
+arango2024quicktune,
+title={Quick-Tune: Quickly Learning Which Pretrained Model to Finetune and How},
+author={Sebastian Pineda Arango and Fabio Ferreira and Arlind Kadra and Frank Hutter and Josif Grabocka},
+booktitle={The Twelfth International Conference on Learning Representations},
+year={2024},
+url={https://openreview.net/forum?id=tqh1zdXIra}
+}
+```
