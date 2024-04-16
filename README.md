@@ -34,7 +34,7 @@ wget https://rewind.tf.uni-freiburg.de/index.php/s/pGyowo3WBp7f33S/download/PLT_
 unzip PLT_VIL_Micro.zip
 ```
 
-You can fine-tune network by providing any hyperparameter as follows:
+From the root folder, you can fine-tune the network by providing any hyperparameter as follows:
 
 ```bash
 mkdir output 
