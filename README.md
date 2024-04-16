@@ -1,5 +1,5 @@
 # QuickTune
-## Quick-Tune: Quickly Learning Which Pre Trained Model to Fine Tune and How [ICLR2024]
+## Quick-Tune: Quickly Learning Which Pretrained Model to Finetune and How [ICLR2024]
 
 This repo contains the code for reproducing the main experiments in the **QuickTune** [paper](https://openreview.net/forum?id=tqh1zdXIra).
 
