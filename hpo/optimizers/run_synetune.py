@@ -1,7 +1,8 @@
 import argparse
 import pandas as pd
 
-from hpo.optimizers.qt_metadataset import QuickTuneMetaDataset
+import sys
+from qt_metadataset import QuickTuneMetaDataset
 
 # from hpo.optimizers.asha.asha import AHBOptimizer
 from sklearn.neighbors import KNeighborsRegressor
@@ -124,7 +125,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--method_name",
         type=str,
-        default="gp",
+        default="dehb",
         help="The algorithm name.",
     )
 
@@ -148,7 +149,7 @@ if __name__ == "__main__":
 
         seed = args.seed
         set_name = args.set_name
-        benchmark = QuickTuneMetaDataset(aggregate_data=aggregate_data, set=set_name)
+        benchmark = QuickTuneMetaDataset(aggregate_data=aggregate_data, version=set_name)
         dataset_names = benchmark.get_datasets()
         print(dataset_names)
         # print(" ".join(dataset_names))
