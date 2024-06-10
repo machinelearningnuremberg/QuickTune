@@ -101,6 +101,10 @@ python plots_generation/plots_results_user_interface.py
 
 If you use any other dataset, make sure to provide the datasets in a format accepted by Timm library. You have to pass the datasets descriptors for the execution as presented in the example bash scripts. 
 
+## QuickTuneTool (QTT)
+
+If you are interested in QTT for real image classification datasets, we suggest you try our package [QuickTuneTool](https://github.com/automl/QTT). We are planning to extend it to other modalities.
+
 ## Citation
 
 You can cite our work as follows:
