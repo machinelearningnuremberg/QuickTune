@@ -9,7 +9,7 @@ This repo contains the code for reproducing the main experiments in the **QuickT
 Create environment and install requirements:
 
 ```bash
-conda -n quick_tune python=3.9
+conda create -n quick_tune python=3.9
 conda activate quick_tune
 pip install -r requirements_qt.txt
 ```
