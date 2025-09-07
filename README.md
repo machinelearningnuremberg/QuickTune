@@ -57,8 +57,16 @@ Download QuickTune meta-dataset:
 
 ```bash
 mkdir data && cd data
-wget https://rewind.tf.uni-freiburg.de/index.php/s/oMxC5sfrkA53ESo/download/qt_metadataset.zip
-unzip QT_metadataset.zip
+mkdir quicktune_metadataset && cd quicktune_metadataset
+
+wget https://raw.githubusercontent.com/sebastianpinedaar/hpo-data/refs/heads/main/extended.zip
+unzip extended.zip
+
+wget https://raw.githubusercontent.com/sebastianpinedaar/hpo-data/refs/heads/main/micro.zip
+unzip micro.zip
+
+wget https://raw.githubusercontent.com/sebastianpinedaar/hpo-data/refs/heads/main/mini.zip
+unzip mini.zip
 ```
 
 Run examples on the meta-dataset:
